@@ -16,13 +16,15 @@ class ViewController: UIViewController {
     private var promptType = PromptType.TEXT
     
     private lazy var networkManager = NetworkManager(URL: URL, token: token)
-    private var storage : [Item] = [] {
+    private var storage : [Item] = // Item.mock()
+    [] {
         willSet {
             DispatchQueue.main.async {
                 self.collectionView.reloadData()
             }
         }
     }
+    private var pictureStorage: [String : UIImage] = [:]
     private let sendButtonSize = 35
     
     @objc func processPrompt() {
@@ -34,11 +36,34 @@ class ViewController: UIViewController {
             view.endEditing(true)
 //        store
             self.storage.append(Item(content: prompt, type: MessageType.PROMPT))
-            
+//        loading animation
+            self.activityIndicatorView.startAnimating()
 //        send / receive / store
-            self.networkManager.requestText(prompt: prompt, path: pathForTextGeneration) { response in
-                self.storage.append(response)
+            switch self.promptType {
+            case .TEXT:
+                self.networkManager.requestText(prompt: prompt, path: pathForTextGeneration) { response in
+                    self.storage.append(response)
+                    DispatchQueue.main.async {
+                        self.activityIndicatorView.stopAnimating()
+                    }
+                }
+            case .PICTURE:
+                self.networkManager.requestPicture(prompt: prompt, path: pathForPictureGeneration, completion: { response in
+                    if let imageURLString = response.imageURL {
+                        if let imageURL = Foundation.URL(string: imageURLString) {
+                            self.networkManager.downloadImage(from: imageURL) { data in
+                                self.pictureStorage[imageURLString] = UIImage(data: data)
+                            }
+                        }
+                    }
+                    self.storage.append(response)
+                    
+                    DispatchQueue.main.async {
+                        self.activityIndicatorView.stopAnimating()
+                    }
+                })
             }
+            
         }
     }
 
@@ -51,7 +76,11 @@ class ViewController: UIViewController {
         $0.addTarget(self, action: #selector(chooseType), for: .valueChanged)
         return $0
     }(UISegmentedControl(frame: CGRect(x: Int(inputBar.frame.midX) - 60, y: Int(textFieldBackground.frame.minY - Margins.S - 30), width: 120, height: 30)))
-
+    
+    private lazy var activityIndicatorView: UIActivityIndicatorView = {
+//        $0.hidesWhenStopped = true
+        return $0
+    }(UIActivityIndicatorView(frame: CGRect(x: Int(Margins.S), y: Int(textFieldBackground.frame.minY - Margins.S - 30), width: 30, height: 30)))
     
     private lazy var textField: UITextField = {
         $0.placeholder = "Prompt"
@@ -84,6 +113,7 @@ class ViewController: UIViewController {
         inputBar.addSubview(segmentedControl)
         inputBar.addSubview(textFieldBackground)
         inputBar.addSubview(sendButton)
+        inputBar.addSubview(activityIndicatorView)
         textFieldBackground.addSubview(textField)
     }
     
@@ -97,6 +127,7 @@ class ViewController: UIViewController {
         $0.dataSource = self
         $0.register(PromptCellView.self, forCellWithReuseIdentifier: PromptCellView.identifier)
         $0.register(AnswerCellView.self, forCellWithReuseIdentifier: AnswerCellView.identifier)
+        $0.register(PictureCellView.self, forCellWithReuseIdentifier: PictureCellView.identifier)
         return $0
     }(UICollectionView(frame: view.frame, collectionViewLayout: UICollectionViewFlowLayout()))
 
@@ -123,18 +154,20 @@ extension ViewController : UICollectionViewDataSource {
             else { return UICollectionViewCell() }
             cell.configure(with: storage[indexPath.row])
             return cell
-
+            
         case .ANSWER:
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AnswerCellView.identifier, for: indexPath) as? AnswerCellView
             else { return UICollectionViewCell() }
             cell.configure(with: storage[indexPath.row])
             return cell
-
-        case .PICTURE:
-//            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PictureCellView.identifier, for: indexPath) as? PictureCellView
-//            else { return UICollectionViewCell() }
             
-            return UICollectionViewCell()
+        case .PICTURE:
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PictureCellView.identifier, for: indexPath) as? PictureCellView
+            else { return UICollectionViewCell() }
+            if let imageURL = storage[indexPath.row].imageURL {
+                cell.configure(message: storage[indexPath.row].content, image: pictureStorage[imageURL])
+            }
+            return cell
         }
     }
 }

@@ -5,6 +5,8 @@
 //  Created by Дима on 1/20/25.
 //
 
+import UIKit
+
 enum MessageType {
     case PROMPT, ANSWER, PICTURE
 }
@@ -24,6 +26,7 @@ struct Item {
     public static func mock() -> [Item] {
         [
             Item(content: "Hello, World! Hello, World! Hello, World! Hello, World!", type: .PROMPT),
+            Item(content: "Hello, World! Hello, World! Hello, World! Hello, World!", type: .PICTURE),
             Item(content: "Hello, World! Hello, World!  Hello, World!  Hello, World!  Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! ", type: .ANSWER, promptTokens: 20, answerTokens: 439, money: 2.75),
             Item(content: "Hello, World! Hello, World! Hello, World! Hello, World!", type: .PROMPT),
             Item(content: "Hello, World! Hello, World!  Hello, World!  Hello, World!  Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! Hello, World! ", type: .ANSWER, promptTokens: 20, answerTokens: 439, money: 2.75),

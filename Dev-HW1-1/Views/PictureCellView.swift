@@ -10,9 +10,9 @@ import UIKit
 final class PictureCellView: UICollectionViewCell {
     public static let identifier = "PictureCellView"
     
-    public func configure(with message: Item) {
-        messageLabel.text = message.content
-        imageView.image = UIImage(named: message.imageURL ?? "")
+    public func configure(message: String, image: UIImage?) {
+        messageLabel.text = message
+        imageView.image = image // UIImage(resource: .picture1)
     }
 
     private lazy var textFieldBackground = {
@@ -25,6 +25,7 @@ final class PictureCellView: UICollectionViewCell {
     private lazy var imageView = {
         $0.translatesAutoresizingMaskIntoConstraints = false
         $0.contentMode = .scaleAspectFill
+        $0.layer.cornerRadius = 34 / 2
         $0.clipsToBounds = true
         return $0
     }(UIImageView())
@@ -51,14 +52,15 @@ final class PictureCellView: UICollectionViewCell {
             textFieldBackground.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             textFieldBackground.widthAnchor.constraint(equalToConstant: Parameters.screenWidth - Margins.M * 2),
             
-            imageView.topAnchor.constraint(equalTo: textFieldBackground.topAnchor, constant: Margins.S),
-            imageView.leadingAnchor.constraint(equalTo: textFieldBackground.leadingAnchor, constant: Margins.S),
-            imageView.trailingAnchor.constraint(equalTo: textFieldBackground.trailingAnchor, constant: -Margins.S),
+            imageView.topAnchor.constraint(equalTo: textFieldBackground.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: textFieldBackground.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: textFieldBackground.trailingAnchor),
             imageView.heightAnchor.constraint(equalTo: textFieldBackground.widthAnchor),
             
-            messageLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: Margins.S),
+            messageLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: Margins.XS),
             messageLabel.leadingAnchor.constraint(equalTo: textFieldBackground.leadingAnchor, constant: Margins.S),
             messageLabel.trailingAnchor.constraint(equalTo: textFieldBackground.trailingAnchor, constant: -Margins.S),
+            messageLabel.bottomAnchor.constraint(equalTo: textFieldBackground.bottomAnchor, constant: -Margins.XS),
         ])
     }
     
