@@ -10,9 +10,12 @@ import UIKit
 final class PictureCellView: UICollectionViewCell {
     public static let identifier = "PictureCellView"
     
-    public func configure(message: String, image: UIImage?) {
+    public func configure(message: String, image: String) {
         messageLabel.text = message
-        imageView.image = image // UIImage(resource: .picture1)
+        
+        if let imageURL = URL(string: image) {
+            imageView.load(url: imageURL)
+        }
     }
 
     private lazy var textFieldBackground = {
@@ -57,7 +60,7 @@ final class PictureCellView: UICollectionViewCell {
             imageView.trailingAnchor.constraint(equalTo: textFieldBackground.trailingAnchor),
             imageView.heightAnchor.constraint(equalTo: textFieldBackground.widthAnchor),
             
-            messageLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: Margins.XS),
+            messageLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: Margins.M),
             messageLabel.leadingAnchor.constraint(equalTo: textFieldBackground.leadingAnchor, constant: Margins.S),
             messageLabel.trailingAnchor.constraint(equalTo: textFieldBackground.trailingAnchor, constant: -Margins.S),
             messageLabel.bottomAnchor.constraint(equalTo: textFieldBackground.bottomAnchor, constant: -Margins.XS),

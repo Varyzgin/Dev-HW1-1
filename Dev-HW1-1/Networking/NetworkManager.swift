@@ -25,7 +25,7 @@ struct NetworkManager {
 //    var headers : [String : String]
 //    let httpMethod : String
     
-    func requestText(prompt : String, path: String, completion: @escaping (Item) -> Void) {
+    func requestText(dialogHistory : [Item], path: String, completion: @escaping (Item) -> Void) {
         var urlComponents = URLComponents(string: URL)
         urlComponents?.path = path
         var request = URLRequest(url: urlComponents!.url!)
@@ -34,7 +34,9 @@ struct NetworkManager {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         var textMessages : [TextRequest.Message] = []
-        textMessages.append(TextRequest.Message(role: "user", content: prompt))
+        for item in dialogHistory {
+            textMessages.append(TextRequest.Message(role: "user", content: item.content))
+        }
         let textRequest = TextRequest(model: "gpt-4o", messages: textMessages)
         
         do {
@@ -52,7 +54,7 @@ struct NetworkManager {
                     type: .ANSWER,
                     promptTokens: response.usage.prompt_tokens,
                     answerTokens: response.usage.completion_tokens,
-                    money: Double(response.usage.total_tokens) * 2 / 10_000
+                    money: Double(response.usage.total_tokens) * 200 / 1_000_000
                 ))
                 print(response.choices[0].message.content)
                 print("tokens spent: \(response.usage.total_tokens)")

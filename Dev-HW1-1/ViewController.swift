@@ -13,6 +13,7 @@ class ViewController: UIViewController {
     private let pathForPictureGeneration = "/api/v2/openai/v1/images/generations"
     private let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdhNWVmMzI0LTc1NmUtNDVlOC04YWYxLTFlMWNkMDRkMDE1NyIsImlzRGV2ZWxvcGVyIjp0cnVlLCJpYXQiOjE3MzUzOTA3NjIsImV4cCI6MjA1MDk2Njc2Mn0.xL2fhtLOtHp_K4Xn_bEAhuKgnRwYlUGwaRk-XxirgdY"
     
+    private var moneySum: Double = 0
     private var promptType = PromptType.TEXT
     
     private lazy var networkManager = NetworkManager(URL: URL, token: token)
@@ -20,15 +21,15 @@ class ViewController: UIViewController {
     [] {
         willSet {
             DispatchQueue.main.async {
+                self.moneySumLabel.text = "Spent: \(String(format: "%.2f", self.moneySum))₱"
                 self.collectionView.reloadData()
             }
         }
     }
-    private var pictureStorage: [String : UIImage] = [:]
     private let sendButtonSize = 35
     
     @objc func processPrompt() {
-        if let prompt = self.textField.text {
+        if var prompt = self.textField.text {
             if prompt == "" { return }
 //        clear input
             self.textField.text = nil
@@ -37,29 +38,37 @@ class ViewController: UIViewController {
 //        store
             self.storage.append(Item(content: prompt, type: MessageType.PROMPT))
 //        loading animation
+            self.moneySumLabel.isHidden = true
             self.activityIndicatorView.startAnimating()
 //        send / receive / store
             switch self.promptType {
             case .TEXT:
-                self.networkManager.requestText(prompt: prompt, path: pathForTextGeneration) { response in
+                self.networkManager.requestText(dialogHistory: storage, path: pathForTextGeneration) { response in
                     self.storage.append(response)
-                    DispatchQueue.main.async {
-                        self.activityIndicatorView.stopAnimating()
-                    }
-                }
-            case .PICTURE:
-                self.networkManager.requestPicture(prompt: prompt, path: pathForPictureGeneration, completion: { response in
-                    if let imageURLString = response.imageURL {
-                        if let imageURL = Foundation.URL(string: imageURLString) {
-                            self.networkManager.downloadImage(from: imageURL) { data in
-                                self.pictureStorage[imageURLString] = UIImage(data: data)
-                            }
-                        }
-                    }
-                    self.storage.append(response)
+                    
+                    self.moneySum += response.money ?? 0
                     
                     DispatchQueue.main.async {
                         self.activityIndicatorView.stopAnimating()
+                    }
+                    DispatchQueue.main.async {
+                        self.moneySumLabel.isHidden = false
+                    }
+                }
+            case .PICTURE:
+                if storage.count > 1 {
+                    prompt += " " + storage[storage.count - 2].content
+                    print(prompt)
+                }
+                self.networkManager.requestPicture(prompt: prompt, path: pathForPictureGeneration, completion: { response in
+                    
+                    self.storage.append(response)
+                    self.moneySum += 4
+                    DispatchQueue.main.async {
+                        self.activityIndicatorView.stopAnimating()
+                    }
+                    DispatchQueue.main.async {
+                        self.moneySumLabel.isHidden = false
                     }
                 })
             }
@@ -67,7 +76,21 @@ class ViewController: UIViewController {
         }
     }
 
-//    let screenHeight = UIScreen.main.bounds.width
+    private lazy var moneySumLabel = {
+        $0.font = TextStyle.description
+        $0.textAlignment = .right
+        $0.textColor = .systemGray2
+        return $0
+    }(UILabel(frame: CGRect(x: Int(inputBar.frame.maxX - Margins.S) - 100, y: Int(textFieldBackground.frame.minY - Margins.S - 30), width: 100, height: 30)))
+
+    private lazy var forgetButton = {
+        $0.setImage(UIImage(systemName: "trash"), for: .normal)
+        $0.addAction(UIAction{_ in 
+            self.storage.removeAll()
+            self.moneySum = 0
+        },for: .touchUpInside)
+        return $0
+    }(UIButton(frame: CGRect(x: Int(Margins.S), y: Int(textFieldBackground.frame.minY - Margins.S - 30), width: 30, height: 30)))
     
     private lazy var segmentedControl = {
         $0.insertSegment(withTitle: "Text", at: 0, animated: false)
@@ -80,7 +103,7 @@ class ViewController: UIViewController {
     private lazy var activityIndicatorView: UIActivityIndicatorView = {
 //        $0.hidesWhenStopped = true
         return $0
-    }(UIActivityIndicatorView(frame: CGRect(x: Int(Margins.S), y: Int(textFieldBackground.frame.minY - Margins.S - 30), width: 30, height: 30)))
+    }(UIActivityIndicatorView(frame: CGRect(x: Int(inputBar.frame.maxX - Margins.S) - 30, y: Int(textFieldBackground.frame.minY - Margins.S - 30), width: 30, height: 30)))
     
     private lazy var textField: UITextField = {
         $0.placeholder = "Prompt"
@@ -110,10 +133,12 @@ class ViewController: UIViewController {
     }
     
     private func setupInputBar() {
+        inputBar.addSubview(activityIndicatorView)
+        inputBar.addSubview(forgetButton)
         inputBar.addSubview(segmentedControl)
+        inputBar.addSubview(moneySumLabel)
         inputBar.addSubview(textFieldBackground)
         inputBar.addSubview(sendButton)
-        inputBar.addSubview(activityIndicatorView)
         textFieldBackground.addSubview(textField)
     }
     
@@ -148,6 +173,10 @@ extension ViewController : UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        if indexPath.row == self.storage.count - 1 {
+            self.collectionView.scrollToItem(at: indexPath, at: .bottom, animated: true)
+        }
+            
         switch storage[indexPath.row].type {
         case .PROMPT:
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PromptCellView.identifier, for: indexPath) as? PromptCellView
@@ -165,7 +194,7 @@ extension ViewController : UICollectionViewDataSource {
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PictureCellView.identifier, for: indexPath) as? PictureCellView
             else { return UICollectionViewCell() }
             if let imageURL = storage[indexPath.row].imageURL {
-                cell.configure(message: storage[indexPath.row].content, image: pictureStorage[imageURL])
+                cell.configure(message: storage[indexPath.row].content, image: imageURL)
             }
             return cell
         }
