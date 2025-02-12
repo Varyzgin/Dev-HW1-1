@@ -10,7 +10,7 @@ import UIKit
 final class AnswerCellView: UICollectionViewCell {
     public static let identifier = "AnswerCellView"
     
-    public func configure(with message: Item) {
+    public func configure(with message: ChatMessage) {
         messageLabel.text = message.content
         if let promptTokens = message.promptTokens, let answerTokens = message.answerTokens, let money = message.money {
             tokensLabel.text = "Tokens: \(promptTokens)/\(answerTokens)"
@@ -21,7 +21,7 @@ final class AnswerCellView: UICollectionViewCell {
     private lazy var textFieldBackground = {
         $0.translatesAutoresizingMaskIntoConstraints = false
         $0.layer.cornerRadius = 34 / 2
-        $0.backgroundColor = .systemFill
+        $0.backgroundColor = .systemGray6
         return $0
     }(UIView())
 

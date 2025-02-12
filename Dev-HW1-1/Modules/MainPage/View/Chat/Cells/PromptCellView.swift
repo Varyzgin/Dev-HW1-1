@@ -10,7 +10,7 @@ import UIKit
 final class PromptCellView: UICollectionViewCell {
     public static let identifier = "PromptCellView"
     
-    public func configure(with message: Item) {
+    public func configure(with message: ChatMessage) {
         messageLabel.text = message.content
     }
 
