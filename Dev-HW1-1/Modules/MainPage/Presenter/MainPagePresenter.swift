@@ -22,7 +22,7 @@ final class MainPagePresenter: MainPagePresenterProtocol {
     
     internal var moneySum: Double = 0
     
-    internal var chatHistory : [ChatMessage] = //Constants.items
+    internal var chatHistory : [ChatMessage] = // Constants.items
     [] {
         willSet {
             DispatchQueue.main.async {

@@ -19,10 +19,10 @@ final class Chat: UICollectionView {
         layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
         
         self.contentInsetAdjustmentBehavior = .never
-        self.contentInset = UIEdgeInsets(top: 150, left: Margins.M, bottom: Margins.L, right: Margins.M)//!!!!!!!!!!! top to change
+        self.contentInset = UIEdgeInsets(top: 150 + Margins.S, left: Margins.M, bottom: Margins.L, right: Margins.M)//!!!!!!!!!!! top to change
         self.dataSource = self
-        self.register(PromptCellView.self, forCellWithReuseIdentifier: PromptCellView.identifier)
-        self.register(AnswerCellView.self, forCellWithReuseIdentifier: AnswerCellView.identifier)
+        self.register(Cell.self, forCellWithReuseIdentifier: Cell.identifier)
+//        self.register(AnswerCellView.self, forCellWithReuseIdentifier: AnswerCellView.identifier)
         self.register(PictureCellView.self, forCellWithReuseIdentifier: PictureCellView.identifier)
         
         self.frame = frame
@@ -39,19 +39,19 @@ extension Chat : UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if indexPath.row == self.history.count - 1 {
-            self.scrollToItem(at: indexPath, at: .bottom, animated: true)
-        }
+//        if indexPath.row == self.history.count - 1 {
+//            self.scrollToItem(at: indexPath, at: .bottom, animated: true)
+//        }
             
         switch self.history[indexPath.row].type {
         case .PROMPT:
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PromptCellView.identifier, for: indexPath) as? PromptCellView
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Cell.identifier, for: indexPath) as? Cell
             else { return UICollectionViewCell() }
             cell.configure(with: self.history[indexPath.row])
             return cell
             
         case .ANSWER:
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AnswerCellView.identifier, for: indexPath) as? AnswerCellView
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Cell.identifier, for: indexPath) as? Cell
             else { return UICollectionViewCell() }
             cell.configure(with: self.history[indexPath.row])
             return cell

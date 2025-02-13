@@ -12,13 +12,16 @@ final class InputBar: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
-        self.backgroundColor = .systemBackground
+
         self.frame.origin = .zero
         self.frame.size = CGSize(width: self.frame.width, height: 150)
         
+//        let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
+//        blurView.frame = self.frame
+//        self.addSubview(blurView)
+        
         textFieldBackground.addSubview(textField)
-        self.addSubviews(activityIndicatorView, forgetButton, segmentedControl, moneySumLabel, textFieldBackground, sendButton)
+        self.addSubviews(backgroundView, activityIndicatorView, forgetButton, segmentedControl, moneySumLabel, textFieldBackground, sendButton)
     }
     
     internal var completion : ((ActionType) -> Void)?
@@ -32,6 +35,11 @@ final class InputBar: UIView {
             break
         }
     }
+    
+    private lazy var backgroundView : UIVisualEffectView = {
+        $0.effect = UIBlurEffect(style: .systemThinMaterial)
+        return $0
+    }(UIVisualEffectView(frame: self.frame))
     
     private lazy var forgetButton : UIButton = {
         $0.tag = ActionType.FORGET.rawValue
